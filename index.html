@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Registration</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border: 2px solid #003366;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #003366;
+            margin-bottom: 20px;
+        }
+
+        .upload-section, .search-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        label {
+            color: #003366;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"], input[type="text"] {
+            padding: 10px;
+            border: 1px solid #003366;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            background-color: #003366;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #00509e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        thead {
+            background-color: #003366;
+            color: #ffffff;
+        }
+
+        th, td {
+            border: 1px solid #003366;
+            padding: 10px;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f0f8ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Event Registration</h1>
+        <div class="upload-section">
+            <label for="fileInput">Upload Attendee List (CSV with Name, Company, Email, Paid Status):</label>
+            <input type="file" id="fileInput" accept=".csv">
+        </div>
+        <div class="search-section">
+            <label for="searchInput">Search Attendee by Name:</label>
+            <input type="text" id="searchInput" placeholder="Enter name or initials...">
+        </div>
+        <div class="buttons">
+            <button id="sortButton">Sort Alphabetically by Name</button>
+        </div>
+        <table id="attendeesTable">
+            <thead>
+                <tr>
+                    <th>Last Name</th>
+                    <th>First Name</th>
+                    <th>Company</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Attendees will be populated here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        document.getElementById('sortButton').addEventListener('click', sortAttendees);
+        document.getElementById('searchInput').addEventListener('input', searchAttendees);
+
+        let attendees = [];
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const rows = e.target.result.split('\n').map(row => row.trim());
+                    attendees = rows.slice(1).filter(row => row).map(row => {
+                        const [name, company, email, paidStatus] = row.split(',');
+                        return { name, company, email, paidStatus };
+                    });
+                    displayAttendees(attendees);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function displayAttendees(data) {
+            const tableBody = document.querySelector('#attendeesTable tbody');
+            tableBody.innerHTML = '';
+            data.forEach(attendee => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${attendee.name}</td>
+                    <td>${attendee.company}</td>
+                    <td>${attendee.email}</td>
+                    <td>${attendee.paidStatus}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function sortAttendees() {
+            attendees.sort((a, b) => a.name.localeCompare(b.name));
+            displayAttendees(attendees);
+        }
+
+        function searchAttendees() {
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            const filteredAttendees = attendees.filter(attendee =>
+                attendee.name.toLowerCase().startsWith(searchValue)
+            );
+            displayAttendees(filteredAttendees);
+        }
+    </script>
+</body>
+</html>
