@@ -6,8 +6,8 @@
     <title>Event Registration</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f0f8ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f3f3;
             margin: 0;
             padding: 0;
             display: flex;
@@ -18,18 +18,19 @@
 
         .container {
             background-color: #ffffff;
-            border: 2px solid #003366;
-            border-radius: 10px;
-            padding: 20px;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 20px 30px;
             width: 90%;
             max-width: 800px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             text-align: center;
-            color: #003366;
+            color: #2b579a;
             margin-bottom: 20px;
+            font-size: 24px;
         }
 
         .upload-section, .search-section {
@@ -38,18 +39,26 @@
         }
 
         label {
-            color: #003366;
-            font-weight: bold;
             display: block;
+            color: #333333;
+            font-weight: 600;
             margin-bottom: 10px;
+            font-size: 14px;
         }
 
         input[type="file"], input[type="text"] {
-            padding: 10px;
-            border: 1px solid #003366;
-            border-radius: 5px;
             width: 100%;
             max-width: 400px;
+            padding: 10px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input[type="file"]:hover, input[type="text"]:focus {
+            border-color: #0078d4;
         }
 
         .buttons {
@@ -58,39 +67,60 @@
         }
 
         button {
-            background-color: #003366;
+            background-color: #0078d4;
             color: #ffffff;
             border: none;
             padding: 10px 20px;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 4px;
             margin: 5px;
+            transition: background-color 0.2s, transform 0.1s;
         }
 
         button:hover {
-            background-color: #00509e;
+            background-color: #005a9e;
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            font-size: 14px;
         }
 
         thead {
-            background-color: #003366;
-            color: #ffffff;
+            background-color: #f3f3f3;
         }
 
-        th, td {
-            border: 1px solid #003366;
-            padding: 10px;
+        th {
+            color: #333333;
+            font-weight: 600;
             text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #e1e1e1;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        tbody tr:hover {
+            background-color: #f9f9f9;
         }
 
         tbody tr:nth-child(even) {
-            background-color: #f0f8ff;
+            background-color: #fcfcfc;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
         }
     </style>
 </head>
@@ -98,12 +128,12 @@
     <div class="container">
         <h1>Event Registration</h1>
         <div class="upload-section">
-            <label for="fileInput">Upload Attendee List (CSV with Name, Company, Email, Paid Status):</label>
+            <label for="fileInput">Upload Attendee List (CSV):</label>
             <input type="file" id="fileInput" accept=".csv">
         </div>
         <div class="search-section">
-            <label for="searchInput">Search Attendee by Name:</label>
-            <input type="text" id="searchInput" placeholder="Enter name or initials...">
+            <label for="searchInput">Search Attendee by Last Name:</label>
+            <input type="text" id="searchInput" placeholder="Enter last name...">
         </div>
         <div class="buttons">
             <button id="sortButton">Sort Alphabetically by Name</button>
@@ -115,6 +145,7 @@
                     <th>First Name</th>
                     <th>Company</th>
                     <th>Email</th>
+                    <th>Present</th>
                 </tr>
             </thead>
             <tbody>
@@ -135,9 +166,9 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const rows = e.target.result.split('\n').map(row => row.trim());
-                    attendees = rows.slice(1).filter(row => row).map(row => {
+                    attendees = rows.slice(1).filter(row => row).map((row, index) => {
                         const [name, company, email, paidStatus] = row.split(',');
-                        return { name, company, email, paidStatus };
+                        return { id: index, name, company, email, paidStatus, present: false };
                     });
                     displayAttendees(attendees);
                 };
@@ -155,9 +186,22 @@
                     <td>${attendee.company}</td>
                     <td>${attendee.email}</td>
                     <td>${attendee.paidStatus}</td>
+                    <td><input type="checkbox" data-id="${attendee.id}" ${attendee.present ? 'checked' : ''}></td>
                 `;
                 tableBody.appendChild(row);
             });
+
+            document.querySelectorAll('#attendeesTable input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', handleCheckboxChange);
+            });
+        }
+
+        function handleCheckboxChange(event) {
+            const id = parseInt(event.target.getAttribute('data-id'));
+            const attendee = attendees.find(att => att.id === id);
+            if (attendee) {
+                attendee.present = event.target.checked;
+            }
         }
 
         function sortAttendees() {
@@ -168,7 +212,7 @@
         function searchAttendees() {
             const searchValue = document.getElementById('searchInput').value.toLowerCase();
             const filteredAttendees = attendees.filter(attendee =>
-                attendee.name.toLowerCase().startsWith(searchValue)
+                attendee.name.toLowerCase().includes(searchValue)
             );
             displayAttendees(filteredAttendees);
         }
